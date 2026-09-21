@@ -26,7 +26,7 @@ import sqlite3
 import time
 import random
 from pathlib import Path
-from flask import Flask, jsonify, request, g, render_template
+from flask import Flask, jsonify, request, g, render_template, send_from_directory
 
 BASE_DIR = Path(__file__).parent
 # Por padrão o banco fica junto do código (BASE_DIR). Se depois você
@@ -154,6 +154,19 @@ def init_db():
 @app.route("/")
 def index():
     return render_template("index.html", lines=LINES)
+
+
+@app.route("/sw.js")
+def service_worker():
+    # Servido na raiz (e não em /static/sw.js) de propósito: o "escopo"
+    # de um service worker por padrão é a pasta onde o arquivo está — se
+    # ficasse em /static/, ele só controlaria páginas dentro de /static/.
+    # Na raiz, ele controla o site inteiro (necessário pro app funcionar
+    # offline / abrir "por fora" como app instalado).
+    response = send_from_directory(app.static_folder, "sw.js")
+    response.headers["Cache-Control"] = "no-cache"
+    response.headers["Content-Type"] = "application/javascript"
+    return response
 
 
 @app.route("/api/lines")
